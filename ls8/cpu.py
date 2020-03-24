@@ -5,8 +5,16 @@ import sys
 class CPU:
     """Main CPU class."""
 
-    def __init__(self):
+    def __init__(self, ram, reg, pc):
         """Construct a new CPU."""
+        self.ram = ram
+        self.reg = reg
+        self.pc = pc
+
+    def ram_read(self, pc):
+        print(pc)
+
+    def ram_write(self):
         pass
 
     def load(self):
@@ -36,7 +44,12 @@ class CPU:
 
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
-        #elif op == "SUB": etc
+        elif op == "SUB":
+            self.reg[reg_a] -= self.reg[reg_b]
+        elif op == "MUL":
+            self.reg[reg_a] *= self.reg[reg_b]
+        elif op == "DIV":
+            self.reg[reg_a] /= self.reg[reg_b]
         else:
             raise Exception("Unsupported ALU operation")
 

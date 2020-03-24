@@ -6,17 +6,25 @@ import sys
 class CPU:
 	"""Main CPU class."""
 
-	def __init__(self, ram, reg, pc):
-	"""Construct a new CPU."""
-	self.ram = ram
-	self.reg = reg
-	self.pc = pc
+	def __init__(self):
+		"""
+		Construct a new CPU.
+		"""
+		self.ram = [0] * 256
+		self.reg = [0] * 8
+		self.pc = 0
 
 	def ram_read(self, pc):
-	print(pc)
+		# return value in ram at index of program step
+		return self.ram[pc]
 
-	def ram_write(self):
-	pass
+	def ram_write(self, pc):
+		address = self.ram[pc + 1] # registry index
+		value = self.ram[pc + 2] # registry location
+
+		self.ram[address] = value
+		print(f'Write successful {self.ram[address]}')
+		self.pc += 3
 
 	def load(self):
 		"""Load a program into memory."""
@@ -28,16 +36,17 @@ class CPU:
 		program = [
 				# From print8.ls8
 						0b10000010,  # LDI R0,8
-						0b00000000,
-						0b00001000,
+						0b00000000, # index in registry, not RAM
+						0b00001000, # value
 						0b01000111,  # PRN R0
 						0b00000000,
 						0b00000001,  # HLT
 			]
 
-	for instruction in program:
-		self.ram[address] = instruction
-		address += 1
+		# assign to ram, not registry
+		for instruction in program:
+			self.ram[address] = instruction
+			address += 1
 
 	def alu(self, op, reg_a, reg_b):
 		"""ALU operations."""
@@ -75,13 +84,31 @@ class CPU:
 
 	def run(self, pc):
 		"""Run the CPU."""
+		# defining instruction
+		LDI = 130
+		PRN = 71
+		HLT = 1
 		# instruction equals current index of program counter "pc"
-		instruction = self.pc
+		# print(instruction)
 		halted = False
 
 		while not halted:
-			if instruction == "HLT":
+			instruction = self.ram[self.pc]
+
+			# print(instruction)
+			if instruction == HLT:
 				halted = True
+
+			elif instruction == LDI:
+				self.ram_write(pc)
+
+
+			elif instruction == PRN:
+				value = self.ram_read(pc)
+
+				print('prn', value)
+				self.pc += 2
+
 			else:
 				print(f'Unknown instructions at index {self.pc}')
 				sys.exit(1)

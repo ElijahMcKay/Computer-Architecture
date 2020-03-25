@@ -1,11 +1,14 @@
 """CPU functionality."""
 
 import sys
+import copy
 
 LDI = 130
 PRN = 71
 HLT = 1
 MUL = 162
+PUSH = 69
+POP = 70
 
 
 class CPU:
@@ -76,6 +79,8 @@ class CPU:
 		# instruction equals current index of program counter "pc"
 		# print(instruction)
 		halted = False
+		# starting address index for stacks according to spec
+		SP = -14
 		while not halted:
 			instruction = self.ram[self.pc]
 			operand_a = self.ram_read(self.pc + 1)
@@ -96,6 +101,24 @@ class CPU:
 				value = self.register[operand_a]
 
 				print(f'Print: {value}')
+				self.pc += 2
+
+			elif instruction == PUSH:
+				# stack pointer points at f4 if stack empty, grows downward (the "top" of the stack is bottom-most value)
+				# Step 1: decrement SP
+				SP -= 1
+				# Step 2: push register at given index to top of stack
+				self.ram[SP] = self.register[operand_a]
+
+				self.pc += 2
+
+			elif instruction == POP:
+				# stack pointer points at f4 if stack empty, grows downward (the "top" of the stack is bottom-most value)
+				# Step 1: copy current value into the register of the given index
+				copy = self.ram[SP]
+				self.register[operand_a] = copy
+				# Step 2: increment SP (towards top of RAM)
+				SP += 1
 				self.pc += 2
 
 			elif instruction == MUL:

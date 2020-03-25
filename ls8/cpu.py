@@ -5,6 +5,8 @@ import sys
 LDI = 130
 PRN = 71
 HLT = 1
+MUL = 162
+
 
 class CPU:
 	"""Main CPU class."""
@@ -29,36 +31,22 @@ class CPU:
 	# takes file input
 	def load(self):
 		"""Load a program into memory."""
-		# For now, we've just hardcoded a program:
-
-		program = [
-				# From print8.ls8
-						0b10000010,  # LDI R0,8
-						0b00000000, # index in registry, not RAM
-						0b00001000, # value
-						0b01000111,  # PRN R0
-						0b00000000,
-						0b00000001,  # HLT
-			]
-
 		address = 0
 
-
-		for instruction in program:
-			self.ram[address] = instruction
-			address += 1
+		with open(sys.argv[1]) as file:
+			for instruction in file:
+				cleaned_instruction = instruction.split(" ")[0]
+				if cleaned_instruction != "#":
+					self.ram[address] = int(cleaned_instruction, 2) # keeping it in binary
+					address += 1
 
 	def alu(self, op, reg_a, reg_b):
 		"""ALU operations."""
 
 		if op == "ADD":
 			self.register[reg_a] += self.register[reg_b]
-		elif op == "SUB":
-			self.register[reg_a] -= self.register[reg_b]
 		elif op == "MUL":
 			self.register[reg_a] *= self.register[reg_b]
-		elif op == "DIV":
-			self.register[reg_a] /= self.register[reg_b]
 		else:
 			raise Exception("Unsupported ALU operation")
 
@@ -88,7 +76,6 @@ class CPU:
 		# instruction equals current index of program counter "pc"
 		# print(instruction)
 		halted = False
-
 		while not halted:
 			instruction = self.ram[self.pc]
 			operand_a = self.ram_read(self.pc + 1)
@@ -107,9 +94,13 @@ class CPU:
 
 			elif instruction == PRN:
 				value = self.register[operand_a]
-				print(value)
+
+				print(f'Print: {value}')
 				self.pc += 2
 
+			elif instruction == MUL:
+				self.alu("MUL", operand_a, operand_b)
+				self.pc += 3
 			else:
 				print(f'Unknown instructions at index {self.pc}')
 				sys.exit(1)

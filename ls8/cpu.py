@@ -2,6 +2,9 @@
 
 import sys
 
+LDI = 130
+PRN = 71
+HLT = 1
 
 class CPU:
 	"""Main CPU class."""
@@ -11,26 +14,21 @@ class CPU:
 		Construct a new CPU.
 		"""
 		self.ram = [0] * 256
-		self.reg = [0] * 8
+		self.register = [0] * 8
 		self.pc = 0
 
-	def ram_read(self, pc):
+	# accepts address to read, returns value at that index
+	def ram_read(self, MAR):
 		# return value in ram at index of program step
-		return self.ram[pc]
+		return self.ram[MAR]
 
-	def ram_write(self, pc):
-		address = self.ram[pc + 1] # registry index
-		value = self.ram[pc + 2] # registry location
+	# accepts a value (MDR) and an address (MAR) to write it to
+	def ram_write(self, MAR, MDR):
+		self.ram[MAR] = MDR
 
-		self.ram[address] = value
-		print(f'Write successful {self.ram[address]}')
-		self.pc += 3
-
+	# takes file input
 	def load(self):
 		"""Load a program into memory."""
-
-		address = 0
-
 		# For now, we've just hardcoded a program:
 
 		program = [
@@ -43,7 +41,9 @@ class CPU:
 						0b00000001,  # HLT
 			]
 
-		# assign to ram, not registry
+		address = 0
+
+
 		for instruction in program:
 			self.ram[address] = instruction
 			address += 1
@@ -52,13 +52,13 @@ class CPU:
 		"""ALU operations."""
 
 		if op == "ADD":
-			self.reg[reg_a] += self.reg[reg_b]
+			self.register[reg_a] += self.register[reg_b]
 		elif op == "SUB":
-			self.reg[reg_a] -= self.reg[reg_b]
+			self.register[reg_a] -= self.register[reg_b]
 		elif op == "MUL":
-			self.reg[reg_a] *= self.reg[reg_b]
+			self.register[reg_a] *= self.register[reg_b]
 		elif op == "DIV":
-			self.reg[reg_a] /= self.reg[reg_b]
+			self.register[reg_a] /= self.register[reg_b]
 		else:
 			raise Exception("Unsupported ALU operation")
 
@@ -78,35 +78,36 @@ class CPU:
 			), end='')
 
 		for i in range(8):
-			print(" %02X" % self.reg[i], end='')
+			print(" %02X" % self.register[i], end='')
 
 			print()
 
-	def run(self, pc):
+	def run(self):
 		"""Run the CPU."""
 		# defining instruction
-		LDI = 130
-		PRN = 71
-		HLT = 1
 		# instruction equals current index of program counter "pc"
 		# print(instruction)
 		halted = False
 
 		while not halted:
 			instruction = self.ram[self.pc]
+			operand_a = self.ram_read(self.pc + 1)
+			operand_b = self.ram_read(self.pc + 2)
 
 			# print(instruction)
 			if instruction == HLT:
 				halted = True
 
+			# 3 steps to an LDI
+			# Step 1: reading instruction
 			elif instruction == LDI:
-				self.ram_write(pc)
-
+				# Step 2: location		# Step 3: value
+				self.register[operand_a] = operand_b
+				self.pc += 3
 
 			elif instruction == PRN:
-				value = self.ram_read(pc)
-
-				print('prn', value)
+				value = self.register[operand_a]
+				print(value)
 				self.pc += 2
 
 			else:
